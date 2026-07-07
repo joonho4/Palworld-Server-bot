@@ -1,0 +1,16 @@
+[Unit]
+Description=Palworld Discord Control Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# 봇을 clone 한 경로/유저에 맞게 수정하세요.
+User=ubuntu
+WorkingDirectory=/home/ubuntu/palworld-bot
+ExecStart=/home/ubuntu/palworld-bot/.venv/bin/python bot.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

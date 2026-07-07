@@ -1,0 +1,17 @@
+[Unit]
+Description=Palworld Dedicated Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=palworld
+WorkingDirectory=/home/palworld/server
+# 시작 시 최신 버전으로 업데이트 (원치 않으면 이 줄 삭제)
+ExecStartPre=/usr/games/steamcmd +force_install_dir /home/palworld/server +login anonymous +app_update 2394010 validate +quit
+ExecStart=/home/palworld/server/PalServer.sh -useperfthreads -NoAsyncLoadingThread -UseMultithreadForDS
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
