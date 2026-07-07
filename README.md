@@ -170,13 +170,25 @@ sudo systemctl status palworld
 > **핵심**: `enable`을 해두면 봇이 VM을 켤 때(`start`) systemd가 팰월드 서버를 자동으로 실행합니다.
 > 즉, 봇은 "VM 전원"만 제어하고 게임 서버 실행은 VM 스스로 처리합니다.
 
-### 4-5. 서버 설정 (선택)
+### 4-5. 서버 설정 + REST API 활성화
 
-접속 인원/비밀번호 등은 아래 파일에서 조정:
+접속 인원/비밀번호, 그리고 **접속자 조회·준비 알림에 필요한 REST API**를 아래 파일에서 설정:
 ```
 /home/palworld/server/Pal/Saved/Config/LinuxServer/PalWorldSettings.ini
 ```
-(서버 최초 1회 실행 후 생성됩니다.)
+(서버 최초 1회 실행 후 생성됩니다. 편집 전 서버를 잠시 끄고 하세요.)
+
+`OptionSettings=(...)` 괄호 안에서 다음 값을 설정:
+```ini
+RESTAPIEnabled=True,
+RESTAPIPort=8212,
+AdminPassword="여기에_강력한_비밀번호",
+```
+- `AdminPassword`가 REST API의 인증 비밀번호가 됩니다 → 봇 `.env`의 `PALWORLD_ADMIN_PASSWORD`에 동일하게 입력.
+- REST 포트(8212)는 **외부 방화벽을 열 필요 없음** — 봇 VM이 같은 VPC 내부 IP로만 접근합니다
+  (GCP 기본 네트워크의 `default-allow-internal` 규칙이 내부 통신을 허용).
+  커스텀 VPC를 쓴다면 봇 VM → 팰월드 VM `tcp:8212` 내부 허용 규칙을 추가하세요.
+- 설정 후 서버 재시작: `sudo systemctl restart palworld`
 
 ### 4-6. VM 이름·존 메모
 
@@ -301,15 +313,19 @@ sudo systemctl enable --now palworld-bot
 
 ---
 
-## 8. 봇 명령어 (예정)
+## 8. 봇 명령어
 
 | 명령 | 설명 |
 |---|---|
-| `/start` | 팰월드 VM을 켭니다 (부팅 후 systemd가 게임 서버 자동 실행), 서버 IP 표시 |
+| `/start` | 팰월드 VM을 켭니다. 준비되면 알림 채널로 접속 주소를 자동 안내 |
 | `/stop` | 팰월드 VM을 끕니다 (비용 절약) |
-| `/status` | VM 실행 상태(RUNNING/TERMINATED 등) 확인 |
+| `/status` | VM 실행 상태(RUNNING/TERMINATED 등) + 접속 주소 확인 |
+| `/ip` | 현재 접속용 외부 IP 표시 |
+| `/players` | 현재 접속 중인 플레이어 목록/인원 (REST API 필요) |
 
-권한 제한(특정 역할만 켜고 끄기)도 봇 코드 단계에서 추가할 예정입니다.
+- **권한 제한**: `.env`의 `CONTROL_ROLE`을 지정하면 해당 역할 보유자만 `/start` `/stop` 가능(비우면 전체 허용).
+- **준비 완료 알림**: `/start` 후 봇이 REST API가 응답할 때까지 백그라운드로 폴링하다가, 게임 서버가 실제 접속 가능해지면
+  `NOTIFY_CHANNEL_ID` 채널(미설정 시 명령 실행 채널)로 알립니다. REST API(`PALWORLD_ADMIN_PASSWORD`) 미설정 시 이 기능은 자동 비활성화.
 
 ---
 
@@ -322,16 +338,29 @@ sudo systemctl enable --now palworld-bot
 | 팰월드 접속 안 됨 | 방화벽 `udp:8211` 규칙, VM 실행 상태, 게임 클라이언트에서 `IP:8211`로 직접 접속 시도 |
 | VM 켰는데 게임 서버 안 뜸 | `sudo systemctl status palworld` 로그 확인, `enable` 되었는지 확인 |
 | 메모리 부족으로 서버 크래시 | 머신 유형을 RAM 16GB급으로 상향, 스왑 추가 |
+| `/players`가 안 됨 | `RESTAPIEnabled=True`, `PALWORLD_ADMIN_PASSWORD` 일치, 봇→팰월드 내부 `tcp:8212` 도달 확인. 서버 로딩 직후엔 잠시 응답 안 할 수 있음 |
+| 준비 알림이 안 옴 | REST API 설정 확인. 봇이 채널에 메시지 보낼 권한 있는지, `NOTIFY_CHANNEL_ID`가 올바른지 확인 |
 
 ---
 
-## 다음 단계
+## 프로젝트 구조
 
-이 문서 확인 후, 다음을 만들면 됩니다:
-1. `bot.py` — discord.py 봇 + GCP 제어 로직
-2. `requirements.txt` — `discord.py`, `google-cloud-compute`
-3. `.env.example` — 환경변수 템플릿
-4. `.gitignore` — `.env`, `.venv` 등 제외
-5. 팰월드/봇 VM용 systemd 유닛 파일
+```
+palworld-bot/
+├── bot.py              # 엔트리포인트 (설정 로딩 → 봇 구성 → cog 로딩 → 실행)
+├── config.py           # .env 로딩/검증 (Settings)
+├── gcp.py              # VM 제어 (start/stop/status/IP) — google-cloud-compute
+├── palworld_api.py     # 팰월드 REST API 클라이언트 (접속자/준비 상태)
+├── notifications.py    # 채널 알림 + 준비 완료 폴링
+├── cogs/
+│   ├── control.py      # /start /stop /status /ip
+│   └── players.py      # /players
+├── requirements.txt
+├── .env.example
+└── deploy/
+    ├── palworld.service         # 팰월드 VM systemd 유닛
+    ├── palworld-bot.service     # 봇 VM systemd 유닛
+    └── palworld-vm-setup.sh     # 팰월드 VM 설치 스크립트
+```
 
-> 준비되면 "봇 코드 만들어줘"라고 말해주세요.
+기능을 추가할 땐 `cogs/`에 새 파일을 만들고 `bot.py`의 `INITIAL_COGS`에 등록하면 됩니다.
