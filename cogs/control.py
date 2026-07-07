@@ -83,11 +83,25 @@ class Control(commands.Cog):
             if snap.is_stopped:
                 await interaction.followup.send("✅ 이미 꺼져 있어요.")
                 return
+
+            # 정지 전에 월드를 명시적으로 저장 (REST API가 설정된 경우, best-effort)
+            saved = await self._save_world(s, snap)
+
             await self.bot.vm.stop()
-            await interaction.followup.send("🔴 서버를 끄는 중입니다. 곧 정지돼요.")
+            note = " (월드 저장 완료 ✅)" if saved else ""
+            await interaction.followup.send(f"🔴 서버를 끄는 중입니다. 곧 정지돼요.{note}")
         except Exception:
             log.exception("stop 실패")
             await interaction.followup.send("❌ 서버를 끄는 중 오류가 발생했어요. 로그를 확인해 주세요.")
+
+    async def _save_world(self, s, snap) -> bool:
+        """정지 전 월드 저장. REST 미설정/도달 불가 시 조용히 False (오토세이브에 의존)."""
+        if not s.rest_enabled or not snap.is_running:
+            return False
+        host = s.rest_host or snap.internal_ip
+        if not host:
+            return False
+        return await self.bot.api.save(host)
 
     @app_commands.command(description="서버(VM) 상태를 확인합니다.")
     async def status(self, interaction: discord.Interaction) -> None:

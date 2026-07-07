@@ -318,7 +318,7 @@ sudo systemctl enable --now palworld-bot
 | 명령 | 설명 |
 |---|---|
 | `/start` | 팰월드 VM을 켭니다. 준비되면 알림 채널로 접속 주소를 자동 안내 |
-| `/stop` | 팰월드 VM을 끕니다 (비용 절약) |
+| `/stop` | 월드를 저장한 뒤 팰월드 VM을 끕니다 (비용 절약) |
 | `/status` | VM 실행 상태(RUNNING/TERMINATED 등) + 접속 주소 확인 |
 | `/ip` | 현재 접속용 외부 IP 표시 |
 | `/players` | 현재 접속 중인 플레이어 목록/인원 (REST API 필요) |
@@ -326,6 +326,10 @@ sudo systemctl enable --now palworld-bot
 - **권한 제한**: `.env`의 `CONTROL_ROLE`을 지정하면 해당 역할 보유자만 `/start` `/stop` 가능(비우면 전체 허용).
 - **준비 완료 알림**: `/start` 후 봇이 REST API가 응답할 때까지 백그라운드로 폴링하다가, 게임 서버가 실제 접속 가능해지면
   `NOTIFY_CHANNEL_ID` 채널(미설정 시 명령 실행 채널)로 알립니다. REST API(`PALWORLD_ADMIN_PASSWORD`) 미설정 시 이 기능은 자동 비활성화.
+- **끄기 전 저장(중요)**: `/stop`은 VM을 끄기 **직전에** REST API `POST /v1/api/save`로 월드를 즉시 저장합니다(성공 시 "월드 저장 완료 ✅" 표시).
+  - REST API가 설정돼 있지 않으면 이 명시적 저장은 생략되고, **팰월드의 주기적 오토세이브**와 VM 종료 시 graceful 처리에만 의존합니다(최근 진행 유실 가능).
+  - 안전을 위해 REST API 설정을 권장하며, 오토세이브 주기는 `PalWorldSettings.ini`의 `AutoSaveSpan`으로 조정할 수 있습니다.
+  - 서버를 켤 때(`/start`)는 마지막 저장 데이터를 그대로 불러오므로 별도 저장이 필요 없습니다.
 
 ---
 
