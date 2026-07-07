@@ -31,6 +31,14 @@ class PalworldBot(commands.Bot):
         self.settings = settings
         self.vm = VMController(settings.gcp_project, settings.zone, settings.instance)
         self.api = PalworldAPI(settings.rest_port, settings.admin_password)
+        # 백그라운드 태스크(준비 완료 폴링 등)가 GC로 사라지지 않도록 참조를 보관.
+        self._bg_tasks: set = set()
+
+    def spawn(self, coro) -> None:
+        """백그라운드 태스크를 생성하고 완료 시 자동으로 참조를 정리한다."""
+        task = self.loop.create_task(coro)
+        self._bg_tasks.add(task)
+        task.add_done_callback(self._bg_tasks.discard)
 
     async def setup_hook(self) -> None:
         for ext in INITIAL_COGS:

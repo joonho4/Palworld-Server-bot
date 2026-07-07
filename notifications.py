@@ -51,9 +51,10 @@ async def watch_until_ready(
     rest_host 가 비어 있으면 VM 내부 IP를 동적으로 조회한다.
     """
     host = rest_host
-    deadline = asyncio.get_event_loop().time() + _POLL_TIMEOUT
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + _POLL_TIMEOUT
 
-    while asyncio.get_event_loop().time() < deadline:
+    while loop.time() < deadline:
         await asyncio.sleep(_POLL_INTERVAL)
         try:
             if not host:

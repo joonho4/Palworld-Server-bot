@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 
 import discord
@@ -58,7 +57,7 @@ class Control(commands.Cog):
 
             # REST API가 설정돼 있으면 준비 완료를 백그라운드로 감시 → 채널 알림
             if s.rest_enabled:
-                asyncio.create_task(
+                self.bot.spawn(
                     notifications.watch_until_ready(
                         self.bot,
                         self.bot.vm,

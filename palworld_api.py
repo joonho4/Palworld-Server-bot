@@ -10,6 +10,8 @@ Basic 인증(username="admin", password=AdminPassword)을 사용한다.
 
 from __future__ import annotations
 
+import asyncio
+
 import aiohttp
 
 
@@ -39,7 +41,7 @@ class PalworldAPI:
         try:
             await self._get(host, "/info")
             return True
-        except (aiohttp.ClientError, PalworldAPIError, TimeoutError):
+        except (aiohttp.ClientError, PalworldAPIError, asyncio.TimeoutError):
             return False
 
     async def players(self, host: str) -> list[dict]:
