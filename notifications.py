@@ -1,7 +1,7 @@
 """채널 알림 및 서버 준비 완료 폴링.
 
 /start 이후 백그라운드에서 REST API가 응답할 때까지 기다렸다가,
-게임 서버가 실제로 접속 가능해지면 알림 채널에 메시지를 보낸다.
+게임 서버가 실제로 접속 가능해지면 알림 채널에 준비 완료 임베드를 보낸다.
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ import logging
 
 import discord
 
+import embeds
 from gcp import VMController
 from palworld_api import PalworldAPI
 
@@ -21,8 +22,10 @@ _POLL_INTERVAL = 10       # 초
 _POLL_TIMEOUT = 300       # 초 (5분 안에 안 뜨면 포기)
 
 
-async def send_to_channel(bot: discord.Client, channel_id: int | None, message: str) -> None:
-    """설정된 알림 채널로 메시지 전송. 채널 미설정/조회 실패 시 조용히 무시."""
+async def send_embed(
+    bot: discord.Client, channel_id: int | None, embed: discord.Embed
+) -> None:
+    """설정된 알림 채널로 임베드 전송. 채널 미설정/조회 실패 시 조용히 무시."""
     if not channel_id:
         return
     channel = bot.get_channel(channel_id)
@@ -34,7 +37,7 @@ async def send_to_channel(bot: discord.Client, channel_id: int | None, message: 
             return
     if isinstance(channel, discord.abc.Messageable):
         try:
-            await channel.send(message)
+            await channel.send(embed=embed)
         except discord.HTTPException:
             log.exception("알림 채널 전송 실패")
 
@@ -63,17 +66,9 @@ async def watch_until_ready(
                     continue
             if await api.is_ready(host):
                 ip = await vm.external_ip()
-                where = f"`{ip}:8211`" if ip else "서버"
-                await send_to_channel(
-                    bot, channel_id, f"🎮 팰월드 서버가 준비됐어요! 접속: {where}"
-                )
+                await send_embed(bot, channel_id, embeds.ready(ip))
                 return
         except Exception:
             log.exception("준비 상태 폴링 중 오류 (계속 재시도)")
 
-    await send_to_channel(
-        bot,
-        channel_id,
-        "⚠️ 서버 VM은 켜졌지만 5분 안에 게임 서버 응답을 확인하지 못했어요. "
-        "`/status` 로 확인하거나 잠시 후 다시 시도해 주세요.",
-    )
+    await send_embed(bot, channel_id, embeds.ready_timeout())
