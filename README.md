@@ -349,6 +349,40 @@ sudo systemctl enable --now palworld-bot
 
 ---
 
+## 10. CI/CD
+
+### CI (자동 검증)
+`.github/workflows/ci.yml` — 모든 push/PR에서 **의존성 설치 → 컴파일 → `tests/verify_bot.py`** 를 Python 3.10·3.12로 실행합니다. 깨진 코드가 main에 들어오는 것을 막아줍니다. 별도 설정 불필요.
+
+### CD (Pull 방식 자동 배포)
+봇 VM이 **주기적으로 `main`을 확인**해서 새 커밋이 있으면 스스로 pull → 의존성 설치 → 검증 → 재시작합니다. GitHub Secrets·인바운드 포트가 필요 없어 안전합니다. (반영은 최대 ~3분 지연)
+
+**흐름**: `git fetch` → `origin/main` 변경 감지 시 `reset --hard` → `pip install` → `verify_bot.py` **통과 시에만** `systemctl restart` (실패하면 기존 봇 유지).
+
+**봇 VM에서 1회 설정** (clone·유저 경로에 맞게 수정):
+```bash
+# 1) deploy 유닛 설치
+sudo cp deploy/palworld-deploy.service deploy/palworld-deploy.timer /etc/systemd/system/
+
+# 2) 배포 스크립트가 봇만 재시작하도록 sudo 허용 (비밀번호 없이)
+echo 'ubuntu ALL=(root) NOPASSWD: /usr/bin/systemctl restart palworld-bot' \
+  | sudo tee /etc/sudoers.d/palworld-deploy
+
+# 3) 타이머 활성화
+sudo systemctl daemon-reload
+sudo systemctl enable --now palworld-deploy.timer
+
+# 확인
+systemctl list-timers palworld-deploy.timer
+journalctl -u palworld-deploy.service -f
+```
+
+> - 봇 VM은 `main` 브랜치를 clone 해두세요 (`git clone -b main ...`). CD는 `main`만 배포합니다.
+> - **공개 저장소면** VM에서 인증 없이 pull 됩니다. **비공개면** 읽기 전용 deploy key를 VM에 등록하세요.
+> - 개발은 `develop`에서 하고, 검증 끝나면 `main`으로 PR/머지 → VM이 자동 반영.
+
+---
+
 ## 프로젝트 구조
 
 ```
@@ -368,7 +402,14 @@ palworld-bot/
 │       └── embeds.py           # 메시지 디자인 + 말투 (한곳에서 관리)
 ├── tests/
 │   └── verify_bot.py           # 오프라인 검증 (GCP/Discord 없이 구조·로직 확인)
-├── deploy/                     # systemd 유닛 + 팰월드 VM 설치 스크립트
+├── .github/workflows/ci.yml    # CI (push/PR 자동 검증)
+├── deploy/                     # systemd 유닛 + 설치/배포 스크립트
+│   ├── palworld.service        #   팰월드 VM
+│   ├── palworld-bot.service    #   봇 상주
+│   ├── palworld-vm-setup.sh    #   팰월드 VM 설치
+│   ├── deploy.sh               #   Pull 방식 자동 배포 스크립트
+│   ├── palworld-deploy.service #   배포 실행(oneshot)
+│   └── palworld-deploy.timer   #   배포 주기 실행(3분)
 ├── requirements.txt
 ├── README.md                   # 전체 가이드
 └── GCP-SETUP.md                # GCP 세팅 전용 가이드
