@@ -1,0 +1,12 @@
+[Unit]
+Description=Palworld bot auto-deploy (pull main and restart on change)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# 봇을 clone 한 유저/경로에 맞게 수정하세요.
+User=ubuntu
+WorkingDirectory=/home/ubuntu/palworld-bot
+# 실행 비트 의존을 피하려 bash로 직접 실행
+ExecStart=/bin/bash /home/ubuntu/palworld-bot/deploy/deploy.sh

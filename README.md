@@ -1,5 +1,7 @@
 # 팰월드 서버 Discord 제어 봇
 
+[![CI](https://github.com/joonho4/Palworld-Server-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/joonho4/Palworld-Server-bot/actions/workflows/ci.yml)
+
 GCP에 배포된 팰월드 전용 서버를 Discord 슬래시 명령으로 켜고 끄는 봇입니다.
 비용 절약이 핵심입니다 — 팰월드 VM은 필요할 때만 켜고, 평소엔 꺼둡니다.
 
@@ -286,7 +288,7 @@ cp .env.example .env
 nano .env   # DISCORD_TOKEN, GUILD_ID, GCP_PROJECT, PALWORLD_INSTANCE, PALWORLD_ZONE 입력
 
 # 실행
-python bot.py
+python main.py
 ```
 
 24시간 상주는 systemd로:
@@ -299,7 +301,7 @@ After=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=/home/<user>/palworld-bot
-ExecStart=/home/<user>/palworld-bot/.venv/bin/python bot.py
+ExecStart=/home/<user>/palworld-bot/.venv/bin/python main.py
 Restart=always
 RestartSec=5
 
@@ -347,24 +349,72 @@ sudo systemctl enable --now palworld-bot
 
 ---
 
+## 10. CI/CD
+
+### CI (자동 검증)
+`.github/workflows/ci.yml` — 모든 push/PR에서 **의존성 설치 → 컴파일 → `tests/verify_bot.py`** 를 Python 3.10·3.12로 실행합니다. 깨진 코드가 main에 들어오는 것을 막아줍니다. 별도 설정 불필요.
+
+### CD (Pull 방식 자동 배포)
+봇 VM이 **주기적으로 `main`을 확인**해서 새 커밋이 있으면 스스로 pull → 의존성 설치 → 검증 → 재시작합니다. GitHub Secrets·인바운드 포트가 필요 없어 안전합니다. (반영은 최대 ~3분 지연)
+
+**흐름**: `git fetch` → `origin/main` 변경 감지 시 `reset --hard` → `pip install` → `verify_bot.py` **통과 시에만** `systemctl restart` (실패하면 기존 봇 유지).
+
+**봇 VM에서 1회 설정** (clone·유저 경로에 맞게 수정):
+```bash
+# 1) deploy 유닛 설치
+sudo cp deploy/palworld-deploy.service deploy/palworld-deploy.timer /etc/systemd/system/
+
+# 2) 배포 스크립트가 봇만 재시작하도록 sudo 허용 (비밀번호 없이)
+echo 'ubuntu ALL=(root) NOPASSWD: /usr/bin/systemctl restart palworld-bot' \
+  | sudo tee /etc/sudoers.d/palworld-deploy
+
+# 3) 타이머 활성화
+sudo systemctl daemon-reload
+sudo systemctl enable --now palworld-deploy.timer
+
+# 확인
+systemctl list-timers palworld-deploy.timer
+journalctl -u palworld-deploy.service -f
+```
+
+> - 봇 VM은 `main` 브랜치를 clone 해두세요 (`git clone -b main ...`). CD는 `main`만 배포합니다.
+> - **공개 저장소면** VM에서 인증 없이 pull 됩니다. **비공개면** 읽기 전용 deploy key를 VM에 등록하세요.
+> - 개발은 `develop`에서 하고, 검증 끝나면 `main`으로 PR/머지 → VM이 자동 반영.
+
+---
+
 ## 프로젝트 구조
 
 ```
 palworld-bot/
-├── bot.py              # 엔트리포인트 (설정 로딩 → 봇 구성 → cog 로딩 → 실행)
-├── config.py           # .env 로딩/검증 (Settings)
-├── gcp.py              # VM 제어 (start/stop/status/IP) — google-cloud-compute
-├── palworld_api.py     # 팰월드 REST API 클라이언트 (접속자/준비 상태)
-├── notifications.py    # 채널 알림 + 준비 완료 폴링
-├── cogs/
-│   ├── control.py      # /start /stop /status /ip
-│   └── players.py      # /players
+├── main.py                     # 실행 진입점 (python main.py)
+├── palbot/                     # 봇 패키지
+│   ├── bot.py                  # 봇 구성 + 실행 (PalworldBot, main)
+│   ├── config.py               # .env 로딩/검증 (Settings)
+│   ├── notifications.py        # 채널 알림 + 준비 완료 폴링
+│   ├── services/               # 외부 연동
+│   │   ├── gcp.py              #   VM 제어 (start/stop/status/IP)
+│   │   └── palworld_api.py     #   팰월드 REST API (접속자/저장/준비)
+│   ├── cogs/                   # 슬래시 명령
+│   │   ├── control.py          #   /start /stop /status /ip
+│   │   └── players.py          #   /players
+│   └── ui/
+│       └── embeds.py           # 메시지 디자인 + 말투 (한곳에서 관리)
+├── tests/
+│   └── verify_bot.py           # 오프라인 검증 (GCP/Discord 없이 구조·로직 확인)
+├── .github/workflows/ci.yml    # CI (push/PR 자동 검증)
+├── deploy/                     # systemd 유닛 + 설치/배포 스크립트
+│   ├── palworld.service        #   팰월드 VM
+│   ├── palworld-bot.service    #   봇 상주
+│   ├── palworld-vm-setup.sh    #   팰월드 VM 설치
+│   ├── deploy.sh               #   Pull 방식 자동 배포 스크립트
+│   ├── palworld-deploy.service #   배포 실행(oneshot)
+│   └── palworld-deploy.timer   #   배포 주기 실행(3분)
 ├── requirements.txt
-├── .env.example
-└── deploy/
-    ├── palworld.service         # 팰월드 VM systemd 유닛
-    ├── palworld-bot.service     # 봇 VM systemd 유닛
-    └── palworld-vm-setup.sh     # 팰월드 VM 설치 스크립트
+├── README.md                   # 전체 가이드
+└── GCP-SETUP.md                # GCP 세팅 전용 가이드
 ```
 
-기능을 추가할 땐 `cogs/`에 새 파일을 만들고 `bot.py`의 `INITIAL_COGS`에 등록하면 됩니다.
+- **메시지 디자인·말투 수정**은 `palbot/ui/embeds.py` 한 파일만 고치면 됩니다.
+- **명령 추가**는 `palbot/cogs/`에 새 파일을 만들고 `palbot/bot.py`의 `INITIAL_COGS`에 등록.
+- **배포 전 검증**은 `python tests/verify_bot.py` 로 언제든 가능합니다.

@@ -1,7 +1,6 @@
-"""팰월드 서버 제어 Discord 봇 — 엔트리포인트.
+"""봇 구성 및 실행.
 
 설정 로딩 → 봇 구성(VM 컨트롤러/REST 클라이언트 주입) → cog 로딩 → 실행.
-실제 명령 로직은 cogs/ 안에, 외부 연동은 gcp.py / palworld_api.py 에 있다.
 """
 
 from __future__ import annotations
@@ -11,9 +10,9 @@ import logging
 import discord
 from discord.ext import commands
 
-from config import Settings
-from gcp import VMController
-from palworld_api import PalworldAPI
+from .config import Settings
+from .services.gcp import VMController
+from .services.palworld_api import PalworldAPI
 
 logging.basicConfig(
     level=logging.INFO,
@@ -21,7 +20,7 @@ logging.basicConfig(
 )
 log = logging.getLogger("palworld-bot")
 
-INITIAL_COGS = ("cogs.control", "cogs.players")
+INITIAL_COGS = ("palbot.cogs.control", "palbot.cogs.players", "palbot.cogs.help")
 
 
 class PalworldBot(commands.Bot):
