@@ -11,9 +11,9 @@ import logging
 
 import discord
 
-import embeds
-from gcp import VMController
-from palworld_api import PalworldAPI
+from .services.gcp import VMController
+from .services.palworld_api import PalworldAPI
+from .ui import embeds
 
 log = logging.getLogger("palworld-bot.notify")
 

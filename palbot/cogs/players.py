@@ -8,8 +8,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-import embeds
-from palworld_api import PalworldAPIError
+from ..services.palworld_api import PalworldAPIError
+from ..ui import embeds
 
 log = logging.getLogger("palworld-bot.players")
 
@@ -44,7 +44,7 @@ class Players(commands.Cog):
             host = await self._resolve_host()
             if not host:
                 await interaction.followup.send(
-                    embed=embeds.error("서버 내부 IP를 찾지 못했어요.")
+                    embed=embeds.error("서버 내부 IP를 못 찾겠노.")
                 )
                 return
 
@@ -56,12 +56,12 @@ class Players(commands.Cog):
         except PalworldAPIError:
             log.exception("players REST 오류")
             await interaction.followup.send(
-                embed=embeds.error("서버 REST API 응답 오류예요. 서버가 아직 로딩 중이거나 설정을 확인해 주세요.")
+                embed=embeds.error("서버 REST API 응답이 이상하노. 아직 로딩 중이거나 설정 확인해보라노.")
             )
         except Exception:
             log.exception("players 실패")
             await interaction.followup.send(
-                embed=embeds.error("접속자 조회 중 오류가 발생했어요. 서버가 아직 준비 중일 수 있어요.")
+                embed=embeds.error("접속자 조회하다 문제 생겼노. 서버가 아직 준비 중일 수도 있노.")
             )
 
 

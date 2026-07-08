@@ -1,6 +1,6 @@
 """Discord 메시지 디자인 (팰월드 테마 임베드).
 
-모든 봇 응답의 디자인을 이 파일 한곳에서 관리한다.
+모든 봇 응답의 디자인·말투를 이 파일 한곳에서 관리한다.
 색상/문구를 바꾸고 싶으면 여기만 수정하면 된다.
 """
 
@@ -34,19 +34,19 @@ def _base(title: str, description: str, color: int) -> discord.Embed:
 
 
 def _addr(ip: str | None) -> str:
-    return f"`{ip}:{GAME_PORT}`" if ip else "주소 확인 중…"
+    return f"`{ip}:{GAME_PORT}`" if ip else "주소 확인 중이노…"
 
 
 # ── VM 상태 메타 (이모지/색상/한글 라벨) ──────────────────────
 _STATE = {
-    "RUNNING": ("🟢", ONLINE, "실행 중"),
+    "RUNNING": ("🟢", ONLINE, "돌아가는 중"),
     "TERMINATED": ("⚫", OFFLINE, "꺼짐"),
     "STOPPED": ("⚫", OFFLINE, "꺼짐"),
-    "SUSPENDED": ("⚫", OFFLINE, "일시정지"),
-    "STOPPING": ("🟠", PENDING, "종료 중"),
+    "SUSPENDED": ("⚫", OFFLINE, "잠깐 멈춤"),
+    "STOPPING": ("🟠", PENDING, "끄는 중"),
     "STAGING": ("🟡", PENDING, "준비 중"),
-    "PROVISIONING": ("🟡", PENDING, "프로비저닝"),
-    "REPAIRING": ("🟠", PENDING, "복구 중"),
+    "PROVISIONING": ("🟡", PENDING, "준비 중"),
+    "REPAIRING": ("🟠", PENDING, "고치는 중"),
 }
 
 
@@ -57,16 +57,16 @@ def _state_meta(status: str) -> tuple[str, int, str]:
 # ── /start ────────────────────────────────────────────────────
 def server_starting() -> discord.Embed:
     e = _base(
-        "🟢 서버를 켜는 중",
-        "팰월드 서버를 시작하고 있어요.\n게임 서버가 준비되면 이 채널로 알려드릴게요.",
+        "🟢 서버 켜는 중이노",
+        "팰월드 서버 키고 있노.\n준비되면 여따 알려주겠노.",
         PENDING,
     )
-    e.add_field(name="예상 소요", value="약 1~3분", inline=True)
+    e.add_field(name="얼마나 걸리노", value="한 1~3분이노", inline=True)
     return e
 
 
 def already_running(ip: str | None) -> discord.Embed:
-    e = _base("✅ 이미 실행 중", "서버가 이미 켜져 있어요. 바로 접속하세요!", ONLINE)
+    e = _base("✅ 벌써 켜져있노", "서버 이미 돌아가고 있노. 바로 드가라노 이기!", ONLINE)
     e.add_field(name="접속 주소", value=_addr(ip), inline=False)
     return e
 
@@ -74,50 +74,49 @@ def already_running(ip: str | None) -> discord.Embed:
 def server_busy(status: str) -> discord.Embed:
     _, _, label = _state_meta(status)
     return _base(
-        "⏳ 잠시만요",
-        f"서버가 지금 **{label}** 상태예요. 잠시 후 다시 시도해 주세요.",
+        "⏳ 좀 기다리라 이기",
+        f"서버가 지금 **{label}** 상태노. 쪼매 있다 다시 해보라 이기.",
         PENDING,
     )
 
 
 # ── /stop ─────────────────────────────────────────────────────
 def server_stopping(saved: bool) -> discord.Embed:
-    desc = "팰월드 서버를 종료하고 있어요. 곧 정지됩니다."
-    e = _base("🔴 서버를 끄는 중", desc, OFFLINE)
+    e = _base("🔴 서버 끄는 중이노", "팰월드 서버 끄고 있노. 곧 정지되겠노.", OFFLINE)
     e.add_field(
         name="월드 저장",
-        value="완료 ✅" if saved else "오토세이브에 의존 (REST 미설정)",
+        value="저장 완료했노 ✅" if saved else "오토세이브 믿는 수밖에 없노 (REST 미설정)",
         inline=True,
     )
     return e
 
 
 def already_stopped() -> discord.Embed:
-    return _base("💤 이미 꺼짐", "서버가 이미 꺼져 있어요.", OFFLINE)
+    return _base("💤 이미 꺼져있노", "서버 벌써 꺼져있노.", OFFLINE)
 
 
 # ── /status ───────────────────────────────────────────────────
 def status(snapshot) -> discord.Embed:
     emoji, color, label = _state_meta(snapshot.status)
-    e = _base(f"{emoji} 서버 상태", f"현재 상태: **{label}**", color)
+    e = _base(f"{emoji} 서버 상태노", f"지금 상태는 **{label}** 노.", color)
     if snapshot.is_running and snapshot.external_ip:
         e.add_field(name="접속 주소", value=_addr(snapshot.external_ip), inline=False)
     elif snapshot.is_stopped:
-        e.add_field(name="켜기", value="`/start` 로 서버를 켤 수 있어요.", inline=False)
+        e.add_field(name="켜기", value="`/start` 치면 서버 켜지노.", inline=False)
     return e
 
 
 # ── /ip ───────────────────────────────────────────────────────
 def ip(address: str) -> discord.Embed:
-    e = _base("🌐 접속 주소", "아래 주소로 팰월드에서 접속하세요.", BRAND)
+    e = _base("🌐 접속 주소노", "여 주소로 팰월드 드가면 되노 이기.", BRAND)
     e.add_field(name="서버 주소", value=_addr(address), inline=False)
     return e
 
 
 def ip_not_found() -> discord.Embed:
     return _base(
-        "⚠️ IP를 찾지 못함",
-        "외부 IP를 확인하지 못했어요. VM 네트워크 설정을 확인해 주세요.",
+        "⚠️ IP 못 찾겠노",
+        "외부 IP를 못 찾았노. VM 네트워크 설정 확인해보라노.",
         ERROR,
     )
 
@@ -125,24 +124,24 @@ def ip_not_found() -> discord.Embed:
 def server_off(status_str: str) -> discord.Embed:
     _, _, label = _state_meta(status_str)
     return _base(
-        "💤 서버가 꺼져 있어요",
-        f"현재 상태는 **{label}** 예요.\n`/start` 로 먼저 서버를 켜주세요.",
+        "💤 서버 꺼져있노",
+        f"지금 **{label}** 상태노.\n`/start` 로 서버부터 켜라노.",
         OFFLINE,
     )
 
 
 # ── 준비 완료 알림 (백그라운드) ───────────────────────────────
 def ready(ip_addr: str | None) -> discord.Embed:
-    e = _base("🎮 서버 준비 완료!", "팰월드 서버에 이제 접속할 수 있어요. 즐거운 모험 되세요!", ONLINE)
+    e = _base("🎮 서버 준비 완료노!", "이제 팰월드 드가면 되노. 재밌게 놀다 오라노!", ONLINE)
     e.add_field(name="접속 주소", value=_addr(ip_addr), inline=False)
     return e
 
 
 def ready_timeout() -> discord.Embed:
     return _base(
-        "⚠️ 준비 확인 실패",
-        "서버 VM은 켜졌지만 5분 안에 게임 서버 응답을 확인하지 못했어요.\n"
-        "`/status` 로 확인하거나 잠시 후 다시 시도해 주세요.",
+        "⚠️ 준비 확인 못했노",
+        "서버 VM은 켜졌는데 5분 안에 게임 서버 응답이 없노.\n"
+        "`/status` 로 확인하거나 쪼매 있다 다시 해보라노.",
         PENDING,
     )
 
@@ -151,21 +150,20 @@ def ready_timeout() -> discord.Embed:
 def players(player_list: list[dict]) -> discord.Embed:
     lines = []
     for p in player_list:
-        name = p.get("name", "알 수 없음")
+        name = p.get("name", "누군지 모르겠노")
         level = p.get("level")
         lines.append(f"🧑‍🌾 **{name}**" + (f" · Lv.{level}" if level else ""))
-    e = _base(f"👥 접속자 {len(player_list)}명", "\n".join(lines), BRAND)
-    return e
+    return _base(f"👥 접속자 {len(player_list)}명이노", "\n".join(lines), BRAND)
 
 
 def no_players() -> discord.Embed:
-    return _base("👤 접속자 없음", "현재 접속 중인 플레이어가 없어요.", OFFLINE)
+    return _base("👤 아무도 없노", "지금 접속한 사람 아무도 없노.", OFFLINE)
 
 
 def players_not_configured() -> discord.Embed:
     return _base(
-        "⚙️ 설정 필요",
-        "접속자 조회가 설정되지 않았어요.\n서버의 REST API와 `PALWORLD_ADMIN_PASSWORD` 를 설정해 주세요.",
+        "⚙️ 설정부터 하라노",
+        "접속자 조회 설정이 안 됐노.\n서버 REST API랑 `PALWORLD_ADMIN_PASSWORD` 설정해라노.",
         OFFLINE,
     )
 
@@ -173,11 +171,11 @@ def players_not_configured() -> discord.Embed:
 # ── 공통 ──────────────────────────────────────────────────────
 def denied(role_name: str) -> discord.Embed:
     return _base(
-        "⛔ 권한 없음",
-        f"이 명령은 `{role_name}` 역할이 있어야 사용할 수 있어요.",
+        "⛔ 권한 없노",
+        f"이 명령은 `{role_name}` 역할 있어야 쓸 수 있노.",
         ERROR,
     )
 
 
 def error(message: str) -> discord.Embed:
-    return _base("❌ 오류", message, ERROR)
+    return _base("❌ 문제 생겼노", message, ERROR)

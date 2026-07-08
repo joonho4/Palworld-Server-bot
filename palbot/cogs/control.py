@@ -8,8 +8,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-import embeds
-import notifications
+from .. import notifications
+from ..ui import embeds
 
 log = logging.getLogger("palworld-bot.control")
 
@@ -64,7 +64,7 @@ class Control(commands.Cog):
         except Exception:
             log.exception("start 실패")
             await interaction.followup.send(
-                embed=embeds.error("서버를 켜는 중 오류가 발생했어요. 로그를 확인해 주세요.")
+                embed=embeds.error("서버 켜다가 문제 생겼노. 로그 확인해보라노.")
             )
 
     @app_commands.command(description="팰월드 서버(VM)를 끕니다. (비용 절약)")
@@ -91,7 +91,7 @@ class Control(commands.Cog):
         except Exception:
             log.exception("stop 실패")
             await interaction.followup.send(
-                embed=embeds.error("서버를 끄는 중 오류가 발생했어요. 로그를 확인해 주세요.")
+                embed=embeds.error("서버 끄다가 문제 생겼노. 로그 확인해보라노.")
             )
 
     async def _save_world(self, s, snap) -> bool:
@@ -111,7 +111,7 @@ class Control(commands.Cog):
             await interaction.followup.send(embed=embeds.status(snap))
         except Exception:
             log.exception("status 실패")
-            await interaction.followup.send(embed=embeds.error("상태 확인 중 오류가 발생했어요."))
+            await interaction.followup.send(embed=embeds.error("상태 확인하다 문제 생겼노."))
 
     @app_commands.command(description="현재 접속용 외부 IP를 보여줍니다.")
     async def ip(self, interaction: discord.Interaction) -> None:
@@ -127,7 +127,7 @@ class Control(commands.Cog):
                 await interaction.followup.send(embed=embeds.ip_not_found())
         except Exception:
             log.exception("ip 실패")
-            await interaction.followup.send(embed=embeds.error("IP 확인 중 오류가 발생했어요."))
+            await interaction.followup.send(embed=embeds.error("IP 확인하다 문제 생겼노."))
 
 
 async def setup(bot: commands.Bot) -> None:

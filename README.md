@@ -286,7 +286,7 @@ cp .env.example .env
 nano .env   # DISCORD_TOKEN, GUILD_ID, GCP_PROJECT, PALWORLD_INSTANCE, PALWORLD_ZONE 입력
 
 # 실행
-python bot.py
+python main.py
 ```
 
 24시간 상주는 systemd로:
@@ -299,7 +299,7 @@ After=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=/home/<user>/palworld-bot
-ExecStart=/home/<user>/palworld-bot/.venv/bin/python bot.py
+ExecStart=/home/<user>/palworld-bot/.venv/bin/python main.py
 Restart=always
 RestartSec=5
 
@@ -351,28 +351,27 @@ sudo systemctl enable --now palworld-bot
 
 ```
 palworld-bot/
-├── bot.py              # 엔트리포인트 (설정 로딩 → 봇 구성 → cog 로딩 → 실행)
-├── config.py           # .env 로딩/검증 (Settings)
-├── gcp.py              # VM 제어 (start/stop/status/IP) — google-cloud-compute
-├── palworld_api.py     # 팰월드 REST API 클라이언트 (접속자/저장/준비 상태)
-├── notifications.py    # 채널 알림 + 준비 완료 폴링
-├── embeds.py           # Discord 메시지 디자인 (팰월드 테마 임베드) — 한곳에서 관리
-├── cogs/
-│   ├── control.py      # /start /stop /status /ip
-│   └── players.py      # /players
+├── main.py                     # 실행 진입점 (python main.py)
+├── palbot/                     # 봇 패키지
+│   ├── bot.py                  # 봇 구성 + 실행 (PalworldBot, main)
+│   ├── config.py               # .env 로딩/검증 (Settings)
+│   ├── notifications.py        # 채널 알림 + 준비 완료 폴링
+│   ├── services/               # 외부 연동
+│   │   ├── gcp.py              #   VM 제어 (start/stop/status/IP)
+│   │   └── palworld_api.py     #   팰월드 REST API (접속자/저장/준비)
+│   ├── cogs/                   # 슬래시 명령
+│   │   ├── control.py          #   /start /stop /status /ip
+│   │   └── players.py          #   /players
+│   └── ui/
+│       └── embeds.py           # 메시지 디자인 + 말투 (한곳에서 관리)
 ├── tests/
-│   └── verify_bot.py   # 오프라인 검증 (GCP/Discord 없이 구조·임베드·로직 확인)
+│   └── verify_bot.py           # 오프라인 검증 (GCP/Discord 없이 구조·로직 확인)
+├── deploy/                     # systemd 유닛 + 팰월드 VM 설치 스크립트
 ├── requirements.txt
-├── .env.example
-├── README.md           # 전체 가이드
-├── GCP-SETUP.md        # GCP 세팅 전용 가이드
-└── deploy/
-    ├── palworld.service         # 팰월드 VM systemd 유닛
-    ├── palworld-bot.service     # 봇 VM systemd 유닛
-    └── palworld-vm-setup.sh     # 팰월드 VM 설치 스크립트
+├── README.md                   # 전체 가이드
+└── GCP-SETUP.md                # GCP 세팅 전용 가이드
 ```
 
-**메시지 디자인 수정**은 `embeds.py` 한 파일만 고치면 됩니다(색상/문구 중앙 관리).
-**배포 전 검증**은 `python tests/verify_bot.py` 로 언제든 가능합니다.
-
-기능을 추가할 땐 `cogs/`에 새 파일을 만들고 `bot.py`의 `INITIAL_COGS`에 등록하면 됩니다.
+- **메시지 디자인·말투 수정**은 `palbot/ui/embeds.py` 한 파일만 고치면 됩니다.
+- **명령 추가**는 `palbot/cogs/`에 새 파일을 만들고 `palbot/bot.py`의 `INITIAL_COGS`에 등록.
+- **배포 전 검증**은 `python tests/verify_bot.py` 로 언제든 가능합니다.

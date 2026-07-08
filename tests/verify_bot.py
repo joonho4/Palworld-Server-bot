@@ -55,10 +55,10 @@ async def main() -> int:
     os.environ.setdefault("PALWORLD_ZONE", "us-central1-a")
 
     print("[1] 모듈 import & 설정 로딩")
-    import config
-    import embeds
-    from gcp import VMSnapshot
-    from palworld_api import PalworldAPI, PalworldAPIError
+    from palbot import config
+    from palbot.ui import embeds
+    from palbot.services.gcp import VMSnapshot
+    from palbot.services.palworld_api import PalworldAPI, PalworldAPIError
     settings = config.Settings.load()
     check("Settings.load()", settings.instance == os.environ["PALWORLD_INSTANCE"])
     check("rest_enabled 판정", settings.rest_enabled == bool(settings.admin_password))
@@ -66,7 +66,7 @@ async def main() -> int:
     # 2. 봇 인스턴스화 + cog 로딩 (GCP 클라이언트는 Mock)
     print("\n[2] 봇 구성 & 명령 등록")
     with patch("google.cloud.compute_v1.InstancesClient", return_value=MagicMock()):
-        import bot as botmod
+        from palbot import bot as botmod
         bot = botmod.PalworldBot(settings)
         for ext in botmod.INITIAL_COGS:
             await bot.load_extension(ext)
@@ -115,7 +115,7 @@ async def main() -> int:
 
     # 4. 권한 체크 로직
     print("\n[4] 권한 체크")
-    from cogs.control import has_control_permission
+    from palbot.cogs.control import has_control_permission
     fake_it = MagicMock()
     fake_it.user = object()  # discord.Member 아님
     check("빈 역할 → 전체 허용", has_control_permission(fake_it, "") is True)
