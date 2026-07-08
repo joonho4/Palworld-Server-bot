@@ -168,6 +168,22 @@ def players_not_configured() -> discord.Embed:
     )
 
 
+# ── /help ─────────────────────────────────────────────────────
+def help_all() -> discord.Embed:
+    e = _base(
+        "📖 명령어 도움말이노",
+        "팰월드 서버는 내가 관리하노. 아래 명령어 쓰면 되노.",
+        BRAND,
+    )
+    e.add_field(name="🟢 /start", value="팰월드 서버 켜노. 준비되면 알려주겠노.", inline=False)
+    e.add_field(name="🔴 /stop", value="월드 저장하고 서버 끄노. (돈 아끼는 거노)", inline=False)
+    e.add_field(name="📊 /status", value="서버 지금 뭐하고 있는지 알려주노.", inline=False)
+    e.add_field(name="🌐 /ip", value="접속 주소 알려주노.", inline=False)
+    e.add_field(name="👥 /players", value="지금 누가 접속해있는지 보여주노.", inline=False)
+    e.add_field(name="📖 /help", value="이 도움말 보여주노.", inline=False)
+    return e
+
+
 # ── 공통 ──────────────────────────────────────────────────────
 def denied(role_name: str) -> discord.Embed:
     return _base(

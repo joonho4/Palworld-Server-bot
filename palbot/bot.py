@@ -20,7 +20,7 @@ logging.basicConfig(
 )
 log = logging.getLogger("palworld-bot")
 
-INITIAL_COGS = ("palbot.cogs.control", "palbot.cogs.players")
+INITIAL_COGS = ("palbot.cogs.control", "palbot.cogs.players", "palbot.cogs.help")
 
 
 class PalworldBot(commands.Bot):
