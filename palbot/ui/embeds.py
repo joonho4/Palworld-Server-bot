@@ -57,11 +57,11 @@ def _state_meta(status: str) -> tuple[str, int, str]:
 # ── /start ────────────────────────────────────────────────────
 def server_starting() -> discord.Embed:
     e = _base(
-        "🟢 서버 켜는 중이노",
-        "팰월드 서버 키고 있노.\n준비되면 여따 알려주겠노.",
+        "🟢 서버 켜는 중이다 이기",
+        "팰월드 서버 키고 있노.\n준비되면 여따 알려주겠노 이기.",
         PENDING,
     )
-    e.add_field(name="얼마나 걸리노", value="한 1~3분이노", inline=True)
+    e.add_field(name="얼마나 걸리노", value="한 1~3분이다 이기", inline=True)
     return e
 
 
@@ -74,7 +74,7 @@ def already_running(ip: str | None) -> discord.Embed:
 def server_busy(status: str) -> discord.Embed:
     _, _, label = _state_meta(status)
     return _base(
-        "⏳ 좀 기다리라 이기",
+        "⏳ 좀 기다리라 봐라 이기",
         f"서버가 지금 **{label}** 상태노. 쪼매 있다 다시 해보라 이기.",
         PENDING,
     )
@@ -82,7 +82,7 @@ def server_busy(status: str) -> discord.Embed:
 
 # ── /stop ─────────────────────────────────────────────────────
 def server_stopping(saved: bool) -> discord.Embed:
-    e = _base("🔴 서버 끄는 중이노", "팰월드 서버 끄고 있노. 곧 정지되겠노.", OFFLINE)
+    e = _base("🔴 서버 끄는 중이다 이기", "팰월드 서버 끄고 있노. 곧 정지되겠노.", OFFLINE)
     e.add_field(
         name="월드 저장",
         value="저장 완료했노 ✅" if saved else "오토세이브 믿는 수밖에 없노 (REST 미설정)",
@@ -115,8 +115,8 @@ def ip(address: str) -> discord.Embed:
 
 def ip_not_found() -> discord.Embed:
     return _base(
-        "⚠️ IP 못 찾겠노",
-        "외부 IP를 못 찾았노. VM 네트워크 설정 확인해보라노.",
+        "⚠️ IP 못 찾겠노 이기",
+        "외부 IP를 못 찾았노. VM 네트워크 설정 확인해보라 이기.",
         ERROR,
     )
 
