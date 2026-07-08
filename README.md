@@ -1,5 +1,7 @@
 # 팰월드 서버 Discord 제어 봇
 
+[![CI](https://github.com/joonho4/Palworld-Server-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/joonho4/Palworld-Server-bot/actions/workflows/ci.yml)
+
 GCP에 배포된 팰월드 전용 서버를 Discord 슬래시 명령으로 켜고 끄는 봇입니다.
 비용 절약이 핵심입니다 — 팰월드 VM은 필요할 때만 켜고, 평소엔 꺼둡니다.
 
