@@ -6,7 +6,7 @@
 # palworld-deploy.timer 가 주기적으로 실행하며, 봇을 clone 한 유저로 동작한다.
 set -euo pipefail
 
-REPO="${PALBOT_DIR:-$HOME/palworld-bot}"
+REPO="${PALBOT_DIR:-$HOME/Palworld-Server-bot}"
 BRANCH="main"
 SERVICE="palworld-bot"
 

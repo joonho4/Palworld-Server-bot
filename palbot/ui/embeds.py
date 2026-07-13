@@ -168,6 +168,30 @@ def players_not_configured() -> discord.Embed:
     )
 
 
+# ── /update ───────────────────────────────────────────────────
+def server_updating(saved: bool) -> discord.Embed:
+    e = _base(
+        "🔄 업데이트 중이다 이기",
+        "월드 저장하고 서버 껐다 켜서 최신 버전으로 올리노.\n다시 준비되면 알려주겠노.",
+        PENDING,
+    )
+    e.add_field(
+        name="월드 저장",
+        value="저장 완료했노 ✅" if saved else "오토세이브 믿는 수밖에 없노 (REST 미설정)",
+        inline=True,
+    )
+    e.add_field(name="얼마나 걸리노", value="한 3~5분이다 이기", inline=True)
+    return e
+
+
+def update_stop_timeout() -> discord.Embed:
+    return _base(
+        "⚠️ 업데이트 실패했노",
+        "서버가 제때 안 꺼져서 업데이트를 못 했노.\n`/status` 확인하고 다시 해보라 이기.",
+        ERROR,
+    )
+
+
 # ── /help ─────────────────────────────────────────────────────
 def help_all() -> discord.Embed:
     e = _base(
@@ -180,6 +204,7 @@ def help_all() -> discord.Embed:
     e.add_field(name="📊 /status", value="서버 지금 뭐하고 있는지 알려주노.", inline=False)
     e.add_field(name="🌐 /ip", value="접속 주소 알려주노.", inline=False)
     e.add_field(name="👥 /players", value="지금 누가 접속해있는지 보여주노.", inline=False)
+    e.add_field(name="🔄 /update", value="저장하고 재시작해서 팰월드 최신 버전으로 올리노.", inline=False)
     e.add_field(name="📖 /help", value="이 도움말 보여주노.", inline=False)
     return e
 

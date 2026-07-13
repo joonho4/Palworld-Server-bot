@@ -40,7 +40,7 @@ def check(name: str, condition: bool, detail: str = "") -> None:
         _failures.append(name)
 
 
-EXPECTED_COMMANDS = {"start", "stop", "status", "ip", "players", "help"}
+EXPECTED_COMMANDS = {"start", "stop", "status", "ip", "players", "help", "update"}
 # Discord 임베드 길이 제한
 MAX_TITLE, MAX_DESC = 256, 4096
 
@@ -73,7 +73,7 @@ async def main() -> int:
         registered = {c.name for c in bot.tree.get_commands()}
         check("cog 3개 로딩", len(bot.cogs) == 3, f"cogs={list(bot.cogs)}")
         check(
-            f"슬래시 명령 6개 등록 {EXPECTED_COMMANDS}",
+            f"슬래시 명령 7개 등록 {EXPECTED_COMMANDS}",
             EXPECTED_COMMANDS.issubset(registered),
             f"실제={registered}",
         )
@@ -101,6 +101,9 @@ async def main() -> int:
         "denied": embeds.denied("palworld-admin"),
         "error": embeds.error("테스트 오류"),
         "help_all": embeds.help_all(),
+        "server_updating(saved)": embeds.server_updating(True),
+        "server_updating(unsaved)": embeds.server_updating(False),
+        "update_stop_timeout": embeds.update_stop_timeout(),
     }
     import discord
     for name, e in samples.items():
