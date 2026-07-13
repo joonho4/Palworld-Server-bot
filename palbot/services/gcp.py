@@ -7,6 +7,7 @@ Discord 이벤트 루프를 막지 않도록 한다.
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timezone
 
 from google.cloud import compute_v1
 
@@ -15,12 +16,26 @@ STOPPED_STATES = frozenset({"TERMINATED", "STOPPED", "SUSPENDED"})
 
 
 class VMController:
-    def __init__(self, project: str, zone: str, instance: str) -> None:
+    def __init__(self, project: str, zone: str, instance: str, disk: str = "") -> None:
         self._project = project
         self._zone = zone
         self._instance = instance
+        self._disk = disk or instance   # 부팅 디스크 이름은 기본적으로 인스턴스와 동일
         # 인증: 봇 VM에 연결된 서비스 계정(ADC)을 자동 사용. 키 파일 불필요.
         self._client = compute_v1.InstancesClient()
+        self._disks = compute_v1.DisksClient()
+
+    async def create_disk_snapshot(self) -> str:
+        """부팅 디스크 스냅샷 생성을 시작하고 스냅샷 이름을 반환한다 (완료 대기 안 함)."""
+        name = f"palworld-{datetime.now(timezone.utc):%Y%m%d-%H%M%S}"
+        await asyncio.to_thread(
+            self._disks.create_snapshot,
+            project=self._project,
+            zone=self._zone,
+            disk=self._disk,
+            snapshot_resource=compute_v1.Snapshot(name=name),
+        )
+        return name
 
     async def _get(self) -> compute_v1.Instance:
         return await asyncio.to_thread(
