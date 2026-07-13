@@ -80,8 +80,13 @@ Discord 사용자
 프로젝트 ID / 리전 / 존을 미리 정해두면 편합니다. 예시:
 ```
 PROJECT_ID = palworld-bot-123456
-REGION     = us-central1
-ZONE       = us-central1-a
+GAME_ZONE  = asia-northeast3-a   # 팰월드 VM — 서울 (한국에서 핑 ~5-20ms)
+BOT_ZONE   = us-central1-a       # 봇 VM — 무료 e2-micro는 미국 리전만
+```
+
+> 팰월드 VM과 봇 VM의 **리전이 달라도** 정상 동작합니다 — VM 제어는 글로벌 API고,
+> default VPC는 글로벌 네트워크라 내부 IP REST 통신도 리전을 넘어 허용됩니다.
+```
 ```
 
 ---
@@ -92,7 +97,7 @@ ZONE       = us-central1-a
 
 콘솔: Compute Engine → VM 인스턴스 → 인스턴스 만들기
 - 이름: `palworld-server`
-- 리전/존: `us-central1` / `us-central1-a`
+- 리전/존: `asia-northeast3`(서울) / `asia-northeast3-a` — 한국에서 핑이 낮아야 하므로 서울 필수
 - 머신 유형: `e2-standard-4` (4 vCPU / 16GB) — 인원 적으면 `e2-highmem-2`(2vCPU/16GB)도 가능
 - 부팅 디스크: **Ubuntu 22.04 LTS**, 크기 30GB 이상 (SSD 권장)
 - 방화벽: 아래에서 UDP 포트 별도 개방
@@ -100,7 +105,7 @@ ZONE       = us-central1-a
 gcloud 예시:
 ```bash
 gcloud compute instances create palworld-server \
-  --zone=us-central1-a \
+  --zone=asia-northeast3-a \
   --machine-type=e2-standard-4 \
   --image-family=ubuntu-2204-lts \
   --image-project=ubuntu-os-cloud \
@@ -197,7 +202,7 @@ AdminPassword="여기에_강력한_비밀번호",
 봇 설정에 쓸 값을 적어둡니다:
 ```
 PALWORLD_INSTANCE = palworld-server
-PALWORLD_ZONE     = us-central1-a
+PALWORLD_ZONE     = asia-northeast3-a
 GCP_PROJECT       = palworld-bot-123456
 ```
 
@@ -324,6 +329,7 @@ sudo systemctl enable --now palworld-bot
 | `/status` | VM 실행 상태(RUNNING/TERMINATED 등) + 접속 주소 확인 |
 | `/ip` | 현재 접속용 외부 IP 표시 |
 | `/players` | 현재 접속 중인 플레이어 목록/인원 (REST API 필요) |
+| `/update` | 월드 저장 → 서버 재시작으로 팰월드 최신 버전 적용 (켤 때마다 자동 업데이트되므로, 켜진 채로 업데이트가 나왔을 때만 사용) |
 
 - **권한 제한**: `.env`의 `CONTROL_ROLE`을 지정하면 해당 역할 보유자만 `/start` `/stop` 가능(비우면 전체 허용).
 - **준비 완료 알림**: `/start` 후 봇이 REST API가 응답할 때까지 백그라운드로 폴링하다가, 게임 서버가 실제 접속 가능해지면

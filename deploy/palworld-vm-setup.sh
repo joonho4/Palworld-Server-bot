@@ -32,3 +32,17 @@ systemctl enable --now palworld
 echo "==> 완료. 상태 확인:"
 systemctl --no-pager status palworld || true
 echo "게임 포트(UDP 8211) 방화벽 규칙이 GCP에 설정돼 있는지 확인하세요."
+
+# ── REST API 설정 (선택) ──────────────────────────────────────
+# 최초 1회 서버 실행 후, 비밀번호를 인자로 주고 이 블록을 실행하세요:
+#   sudo bash palworld-vm-setup.sh rest <관리자비밀번호>
+# ⚠️ 비밀번호를 이 파일에 직접 적지 마세요 (git에 올라가는 파일입니다).
+if [ "${1:-}" = "rest" ] && [ -n "${2:-}" ]; then
+  INI=/home/palworld/server/Pal/Saved/Config/LinuxServer/PalWorldSettings.ini
+  systemctl stop palworld
+  [ -s "$INI" ] || sudo -u palworld cp /home/palworld/server/DefaultPalWorldSettings.ini "$INI"
+  sudo -u palworld sed -i 's/RESTAPIEnabled=False/RESTAPIEnabled=True/' "$INI"
+  sudo -u palworld sed -i "s/AdminPassword=\"\"/AdminPassword=\"$2\"/" "$INI"
+  systemctl start palworld
+  echo "==> REST API 설정 완료 (포트 8212)"
+fi

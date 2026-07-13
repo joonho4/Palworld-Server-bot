@@ -37,9 +37,14 @@ gcloud config set project <프로젝트ID>
 이 가이드 전체에서 쓸 변수를 미리 설정하면 편합니다:
 ```bash
 export PROJECT=<프로젝트ID>
-export ZONE=us-central1-a          # 무료 티어: us-west1 / us-central1 / us-east1
-export REGION=us-central1
+# 팰월드 VM은 핑 때문에 서울, 봇 VM은 무료 티어 때문에 미국 (리전 분리!)
+export GAME_ZONE=asia-northeast3-a   # 서울 — 한국에서 핑 ~5-20ms
+export BOT_ZONE=us-central1-a        # 무료 e2-micro: us-west1 / us-central1 / us-east1 만 해당
 ```
+
+> **왜 리전을 나누나?** 게임 서버는 핑이 중요해서 서울(`asia-northeast3`),
+> 봇은 핑이 무관하고 무료 e2-micro가 미국 리전에만 있어서 `us-central1`.
+> 리전이 달라도 VM 제어(글로벌 API)와 내부 IP REST 통신(default VPC는 글로벌)이 모두 정상 동작합니다.
 
 ---
 
@@ -57,9 +62,9 @@ gcloud services enable compute.googleapis.com --project=$PROJECT
 > 팰월드는 RAM 16GB급이 필요해 무료 티어가 아닙니다. **필요할 때만 켜서** 비용을 아낍니다.
 
 ```bash
-# VM 생성
+# VM 생성 (서울 리전 — 한국에서 낮은 핑)
 gcloud compute instances create palworld-server \
-  --project=$PROJECT --zone=$ZONE \
+  --project=$PROJECT --zone=$GAME_ZONE \
   --machine-type=e2-standard-4 \
   --image-family=ubuntu-2204-lts --image-project=ubuntu-os-cloud \
   --boot-disk-size=30GB --boot-disk-type=pd-ssd \
@@ -72,7 +77,7 @@ gcloud compute firewall-rules create palworld-udp \
 
 ### 서버 설치
 ```bash
-gcloud compute ssh palworld-server --project=$PROJECT --zone=$ZONE
+gcloud compute ssh palworld-server --project=$PROJECT --zone=$GAME_ZONE
 ```
 접속되면 VM 안에서 [deploy/palworld-vm-setup.sh](deploy/palworld-vm-setup.sh)의 내용을 실행합니다
 (SteamCMD 설치 → 서버 다운로드 → systemd 등록). 자세한 단계는 README §4-3, §4-4 참고.
@@ -120,7 +125,7 @@ gcloud projects add-iam-policy-binding $PROJECT \
 
 ```bash
 gcloud compute instances create palworld-bot \
-  --project=$PROJECT --zone=$ZONE \
+  --project=$PROJECT --zone=$BOT_ZONE \
   --machine-type=e2-micro \
   --image-family=ubuntu-2204-lts --image-project=ubuntu-os-cloud \
   --boot-disk-size=10GB \
@@ -136,7 +141,7 @@ gcloud compute instances create palworld-bot \
 ## 6. 봇 코드 배포
 
 ```bash
-gcloud compute ssh palworld-bot --project=$PROJECT --zone=$ZONE
+gcloud compute ssh palworld-bot --project=$PROJECT --zone=$BOT_ZONE
 ```
 VM 안에서:
 ```bash
@@ -158,7 +163,7 @@ CONTROL_ROLE=
 NOTIFY_CHANNEL_ID=
 GCP_PROJECT=<프로젝트ID>
 PALWORLD_INSTANCE=palworld-server
-PALWORLD_ZONE=us-central1-a
+PALWORLD_ZONE=asia-northeast3-a
 PALWORLD_ADMIN_PASSWORD=아까_ini에_넣은_값
 PALWORLD_REST_HOST=
 PALWORLD_REST_PORT=8212
