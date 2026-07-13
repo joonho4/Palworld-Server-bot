@@ -40,7 +40,10 @@ def check(name: str, condition: bool, detail: str = "") -> None:
         _failures.append(name)
 
 
-EXPECTED_COMMANDS = {"start", "stop", "status", "ip", "players", "help", "update"}
+EXPECTED_COMMANDS = {
+    "start", "stop", "status", "ip", "players", "help", "update",
+    "announce", "backup", "stop-in",
+}
 # Discord 임베드 길이 제한
 MAX_TITLE, MAX_DESC = 256, 4096
 
@@ -65,15 +68,16 @@ async def main() -> int:
 
     # 2. 봇 인스턴스화 + cog 로딩 (GCP 클라이언트는 Mock)
     print("\n[2] 봇 구성 & 명령 등록")
-    with patch("google.cloud.compute_v1.InstancesClient", return_value=MagicMock()):
+    with patch("google.cloud.compute_v1.InstancesClient", return_value=MagicMock()), \
+         patch("google.cloud.compute_v1.DisksClient", return_value=MagicMock()):
         from palbot import bot as botmod
         bot = botmod.PalworldBot(settings)
         for ext in botmod.INITIAL_COGS:
             await bot.load_extension(ext)
         registered = {c.name for c in bot.tree.get_commands()}
-        check("cog 3개 로딩", len(bot.cogs) == 3, f"cogs={list(bot.cogs)}")
+        check("cog 4개 로딩", len(bot.cogs) == 4, f"cogs={list(bot.cogs)}")
         check(
-            f"슬래시 명령 7개 등록 {EXPECTED_COMMANDS}",
+            f"슬래시 명령 10개 등록 {EXPECTED_COMMANDS}",
             EXPECTED_COMMANDS.issubset(registered),
             f"실제={registered}",
         )
@@ -104,6 +108,15 @@ async def main() -> int:
         "server_updating(saved)": embeds.server_updating(True),
         "server_updating(unsaved)": embeds.server_updating(False),
         "update_stop_timeout": embeds.update_stop_timeout(),
+        "players_joined": embeds.players_joined(["철수", "영희"]),
+        "players_left": embeds.players_left(["철수"]),
+        "idle_warning": embeds.idle_warning(5),
+        "idle_stopped": embeds.idle_stopped(60, True),
+        "announce_ok": embeds.announce_ok("테스트 공지"),
+        "backup_started": embeds.backup_started("palworld-20260713-1200", True),
+        "stopin_scheduled": embeds.stopin_scheduled(30),
+        "stopin_cancelled": embeds.stopin_cancelled(),
+        "stopin_none": embeds.stopin_none(),
     }
     import discord
     for name, e in samples.items():

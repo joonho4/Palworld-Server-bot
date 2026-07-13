@@ -330,6 +330,20 @@ sudo systemctl enable --now palworld-bot
 | `/ip` | 현재 접속용 외부 IP 표시 |
 | `/players` | 현재 접속 중인 플레이어 목록/인원 (REST API 필요) |
 | `/update` | 월드 저장 → 서버 재시작으로 팰월드 최신 버전 적용 (켤 때마다 자동 업데이트되므로, 켜진 채로 업데이트가 나왔을 때만 사용) |
+| `/announce <내용>` | 게임 안으로 전체 공지 전송 (REST API 필요) |
+| `/stop-in <분>` | N분 뒤 예약 종료 (1분 전 게임 내 경고). `0`이면 취소 |
+| `/backup` | 월드 저장 + 서버 디스크 스냅샷 백업 (스냅샷 IAM 권한 필요, 아래 참고) |
+
+**자동 기능 (감시 루프, 60초 주기)**
+- **유휴 자동 종료**: 접속자 0명이 `IDLE_STOP_MINUTES`(기본 60분) 지속되면 5분 전 게임 내 경고 후 저장·종료. `0`이면 비활성
+- **접속/퇴장 알림**: 누가 들어오고 나가면 `NOTIFY_CHANNEL_ID` 채널에 알림
+- **봇 상태 표시**: 봇 프로필에 "🟢 3명 접속 중이노" / "💤 서버 꺼져있노" 실시간 표시
+
+**`/backup`용 IAM 권한 추가** (스냅샷 생성 권한, 1회):
+```bash
+gcloud iam roles update palworldBotControl --project=<프로젝트ID> \
+  --add-permissions=compute.disks.createSnapshot,compute.snapshots.create,compute.snapshots.get
+```
 
 - **권한 제한**: `.env`의 `CONTROL_ROLE`을 지정하면 해당 역할 보유자만 `/start` `/stop` 가능(비우면 전체 허용).
 - **준비 완료 알림**: `/start` 후 봇이 REST API가 응답할 때까지 백그라운드로 폴링하다가, 게임 서버가 실제 접속 가능해지면

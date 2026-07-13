@@ -109,7 +109,7 @@ gcloud iam service-accounts create palworld-bot-sa \
 # 딱 필요한 권한만 담은 커스텀 역할
 gcloud iam roles create palworldBotControl --project=$PROJECT \
   --title="Palworld Bot VM Control" \
-  --permissions=compute.instances.start,compute.instances.stop,compute.instances.get,compute.instances.list
+  --permissions=compute.instances.start,compute.instances.stop,compute.instances.get,compute.instances.list,compute.disks.createSnapshot,compute.snapshots.create,compute.snapshots.get
 
 # 서비스 계정에 역할 부여
 gcloud projects add-iam-policy-binding $PROJECT \

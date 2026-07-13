@@ -39,6 +39,11 @@ class Settings:
     rest_port: int
     admin_password: str
 
+    # 자동 종료: 접속자 0명이 이 시간(분) 지속되면 저장 후 종료. 0이면 비활성
+    idle_stop_minutes: int
+    # /backup 스냅샷 대상 디스크. 비우면 인스턴스 이름과 동일한 부팅 디스크로 간주
+    backup_disk: str
+
     @property
     def rest_enabled(self) -> bool:
         """REST API 기반 기능(/players, 준비 알림) 사용 가능 여부."""
@@ -59,4 +64,6 @@ class Settings:
             rest_host=os.getenv("PALWORLD_REST_HOST", "").strip(),
             rest_port=int(os.getenv("PALWORLD_REST_PORT", "8212")),
             admin_password=os.getenv("PALWORLD_ADMIN_PASSWORD", "").strip(),
+            idle_stop_minutes=int(os.getenv("IDLE_STOP_MINUTES", "0") or 0),
+            backup_disk=os.getenv("PALWORLD_DISK", "").strip(),
         )

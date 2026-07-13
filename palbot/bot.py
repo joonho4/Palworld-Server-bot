@@ -20,7 +20,12 @@ logging.basicConfig(
 )
 log = logging.getLogger("palworld-bot")
 
-INITIAL_COGS = ("palbot.cogs.control", "palbot.cogs.players", "palbot.cogs.help")
+INITIAL_COGS = (
+    "palbot.cogs.control",
+    "palbot.cogs.players",
+    "palbot.cogs.help",
+    "palbot.cogs.admin",
+)
 
 
 class PalworldBot(commands.Bot):
@@ -28,7 +33,10 @@ class PalworldBot(commands.Bot):
         # 슬래시 명령만 사용 → 메시지 내용 인텐트 불필요. command_prefix는 형식상 지정.
         super().__init__(command_prefix="!", intents=discord.Intents.default())
         self.settings = settings
-        self.vm = VMController(settings.gcp_project, settings.zone, settings.instance)
+        self.vm = VMController(
+            settings.gcp_project, settings.zone, settings.instance,
+            disk=settings.backup_disk,
+        )
         self.api = PalworldAPI(settings.rest_port, settings.admin_password)
         # 백그라운드 태스크(준비 완료 폴링 등)가 GC로 사라지지 않도록 참조를 보관.
         self._bg_tasks: set = set()
@@ -52,6 +60,11 @@ class PalworldBot(commands.Bot):
         else:
             await self.tree.sync()
             log.info("슬래시 명령을 글로벌 동기화했습니다 (최대 1시간 지연).")
+
+        # 서버 감시 루프 시작 (상태 표시 / 접속·퇴장 알림 / 유휴 자동 종료)
+        from .watcher import ServerWatcher
+        self.watcher = ServerWatcher(self)
+        self.spawn(self.watcher.run())
 
     async def on_ready(self) -> None:
         log.info("로그인 완료: %s (id=%s)", self.user, self.user.id)

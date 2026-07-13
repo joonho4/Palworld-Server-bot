@@ -168,6 +168,82 @@ def players_not_configured() -> discord.Embed:
     )
 
 
+# ── 감시 루프 (접속/퇴장, 자동 종료) ──────────────────────────
+def players_joined(names: list[str]) -> discord.Embed:
+    who = ", ".join(f"**{n}**" for n in names)
+    return _base("👋 누가 들어왔노", f"{who} 들어왔노. 반겨주라 이기!", ONLINE)
+
+
+def players_left(names: list[str]) -> discord.Embed:
+    who = ", ".join(f"**{n}**" for n in names)
+    return _base("🚪 누가 나갔노", f"{who} 나갔노. 잘 가라 이기~", OFFLINE)
+
+
+def idle_warning(minutes_left: int) -> discord.Embed:
+    return _base(
+        "⏰ 곧 자동 종료다 이기",
+        f"아무도 없어서 **{minutes_left}분 뒤** 서버 자동으로 끄겠노.\n"
+        "계속 쓸 거면 지금 들어가라 이기.",
+        PENDING,
+    )
+
+
+def idle_stopped(idle_minutes: int, saved: bool) -> discord.Embed:
+    e = _base(
+        "💤 자동 종료했노",
+        f"{idle_minutes}분 동안 아무도 없어서 서버 껐노. (돈 아꼈다 이기)\n"
+        "`/start` 치면 다시 켜지노.",
+        OFFLINE,
+    )
+    e.add_field(
+        name="월드 저장",
+        value="저장 완료했노 ✅" if saved else "오토세이브 믿는 수밖에 없노",
+        inline=True,
+    )
+    return e
+
+
+# ── /announce ─────────────────────────────────────────────────
+def announce_ok(message: str) -> discord.Embed:
+    e = _base("📢 공지 보냈노", "게임 안에 전체 공지 띄웠다 이기.", BRAND)
+    e.add_field(name="내용", value=message[:1000], inline=False)
+    return e
+
+
+# ── /backup ───────────────────────────────────────────────────
+def backup_started(snapshot_name: str, saved: bool) -> discord.Embed:
+    e = _base(
+        "💾 백업 시작했노",
+        "서버 디스크 스냅샷 만들기 시작했노. 몇 분 걸리노.",
+        BRAND,
+    )
+    e.add_field(name="스냅샷 이름", value=f"`{snapshot_name}`", inline=False)
+    e.add_field(
+        name="월드 저장",
+        value="저장 완료했노 ✅" if saved else "서버 꺼져있거나 REST 미설정이라 디스크 그대로 백업했노",
+        inline=False,
+    )
+    return e
+
+
+# ── /stop-in ──────────────────────────────────────────────────
+def stopin_scheduled(minutes: int) -> discord.Embed:
+    return _base(
+        "⏲️ 예약 종료 걸었노",
+        f"**{minutes}분 뒤** 저장하고 서버 끄겠노.\n"
+        "취소하려면 `/stop-in 0` 치라 이기.",
+        PENDING,
+    )
+
+
+def stopin_cancelled() -> discord.Embed:
+    return _base("✅ 예약 취소했노", "예약 종료 없던 걸로 했다 이기.", OFFLINE)
+
+
+def stopin_none() -> discord.Embed:
+    return _base("🤔 예약 없는데", "취소할 예약 종료가 없노.", OFFLINE)
+
+
 # ── /update ───────────────────────────────────────────────────
 def server_updating(saved: bool) -> discord.Embed:
     e = _base(
@@ -205,7 +281,17 @@ def help_all() -> discord.Embed:
     e.add_field(name="🌐 /ip", value="접속 주소 알려주노.", inline=False)
     e.add_field(name="👥 /players", value="지금 누가 접속해있는지 보여주노.", inline=False)
     e.add_field(name="🔄 /update", value="저장하고 재시작해서 팰월드 최신 버전으로 올리노.", inline=False)
+    e.add_field(name="📢 /announce", value="게임 안에 전체 공지 보내노.", inline=False)
+    e.add_field(name="⏲️ /stop-in", value="N분 뒤 예약 종료하노. 0 치면 취소노.", inline=False)
+    e.add_field(name="💾 /backup", value="디스크 스냅샷으로 월드 백업하노.", inline=False)
     e.add_field(name="📖 /help", value="이 도움말 보여주노.", inline=False)
+    e.add_field(
+        name="🤖 자동으로 해주는 것",
+        value="• 아무도 없으면 일정 시간 뒤 알아서 끄노 (돈 절약)\n"
+              "• 누가 들어오고 나가면 알려주노\n"
+              "• 봇 상태 메시지에 서버 상태 떠있노",
+        inline=False,
+    )
     return e
 
 
