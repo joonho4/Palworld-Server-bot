@@ -68,6 +68,9 @@ class Admin(commands.Cog):
                 embed=embeds.denied(s.control_role), ephemeral=True
             )
             return
+        if not s.power_control:
+            await interaction.response.send_message(embed=embeds.power_unavailable())
+            return
 
         await interaction.response.defer(thinking=True)
         try:
@@ -101,6 +104,9 @@ class Admin(commands.Cog):
             await interaction.response.send_message(
                 embed=embeds.denied(s.control_role), ephemeral=True
             )
+            return
+        if not s.power_control:
+            await interaction.response.send_message(embed=embeds.power_unavailable())
             return
 
         # 취소

@@ -33,10 +33,15 @@ class PalworldBot(commands.Bot):
         # 슬래시 명령만 사용 → 메시지 내용 인텐트 불필요. command_prefix는 형식상 지정.
         super().__init__(command_prefix="!", intents=discord.Intents.default())
         self.settings = settings
-        self.vm = VMController(
-            settings.gcp_project, settings.zone, settings.instance,
-            disk=settings.backup_disk,
-        )
+        if settings.power_control:
+            self.vm = VMController(
+                settings.gcp_project, settings.zone, settings.instance,
+                disk=settings.backup_disk,
+            )
+        else:
+            # 상시 가동 서버 (오라클 무료 등) — 전원 제어 없음
+            from .services.static_vm import StaticVM
+            self.vm = StaticVM(settings.public_ip, settings.rest_host)
         self.api = PalworldAPI(settings.rest_port, settings.admin_password)
         # 백그라운드 태스크(준비 완료 폴링 등)가 GC로 사라지지 않도록 참조를 보관.
         self._bg_tasks: set = set()

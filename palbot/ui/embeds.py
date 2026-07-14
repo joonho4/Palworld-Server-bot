@@ -295,6 +295,27 @@ def help_all() -> discord.Embed:
     return e
 
 
+# ── 상시 가동 모드 (오라클 무료 등) ───────────────────────────
+def always_on(ip_addr: str | None) -> discord.Embed:
+    e = _base(
+        "♾️ 서버 24시간 켜져있노",
+        "이 서버는 공짜라 끌 필요가 없노. 아무 때나 드가라 이기!",
+        ONLINE,
+    )
+    if ip_addr:
+        e.add_field(name="접속 주소", value=_addr(ip_addr), inline=False)
+    return e
+
+
+def power_unavailable() -> discord.Embed:
+    return _base(
+        "♾️ 그거 여기선 안 쓰노",
+        "이 서버는 상시 가동이라 전원/스냅샷 조작이 없노.\n"
+        "`/players` `/announce` 는 그대로 쓸 수 있다 이기.",
+        OFFLINE,
+    )
+
+
 # ── 공통 ──────────────────────────────────────────────────────
 def denied(role_name: str) -> discord.Embed:
     return _base(
