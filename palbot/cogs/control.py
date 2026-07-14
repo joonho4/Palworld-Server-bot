@@ -37,6 +37,9 @@ class Control(commands.Cog):
                 embed=embeds.denied(s.control_role), ephemeral=True
             )
             return
+        if not s.power_control:
+            await interaction.response.send_message(embed=embeds.always_on(s.public_ip))
+            return
 
         await interaction.response.defer(thinking=True)
         try:
@@ -76,6 +79,9 @@ class Control(commands.Cog):
                 embed=embeds.denied(s.control_role), ephemeral=True
             )
             return
+        if not s.power_control:
+            await interaction.response.send_message(embed=embeds.power_unavailable())
+            return
 
         await interaction.response.defer(thinking=True)
         try:
@@ -111,6 +117,9 @@ class Control(commands.Cog):
             await interaction.response.send_message(
                 embed=embeds.denied(s.control_role), ephemeral=True
             )
+            return
+        if not s.power_control:
+            await interaction.response.send_message(embed=embeds.power_unavailable())
             return
 
         await interaction.response.defer(thinking=True)

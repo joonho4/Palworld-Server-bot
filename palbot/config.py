@@ -29,7 +29,12 @@ class Settings:
     control_role: str
     notify_channel_id: int | None
 
-    # GCP
+    # 서버 전원 제어 방식: "gcp" = GCP VM 켜고 끄기 / "none" = 상시 가동(오라클 무료 등)
+    vm_provider: str
+    # vm_provider=none 일 때 접속 안내에 표시할 공개 IP
+    public_ip: str
+
+    # GCP (vm_provider=gcp 일 때만 필수)
     gcp_project: str
     instance: str
     zone: str
@@ -49,18 +54,27 @@ class Settings:
         """REST API 기반 기능(/players, 준비 알림) 사용 가능 여부."""
         return bool(self.admin_password)
 
+    @property
+    def power_control(self) -> bool:
+        """봇이 서버 전원을 켜고 끌 수 있는지 (상시 가동 서버면 False)."""
+        return self.vm_provider == "gcp"
+
     @classmethod
     def load(cls) -> "Settings":
         guild = os.getenv("GUILD_ID")
         channel = os.getenv("NOTIFY_CHANNEL_ID")
+        provider = os.getenv("VM_PROVIDER", "gcp").strip().lower()
+        req = _require if provider == "gcp" else (lambda name: os.getenv(name, "").strip())
         return cls(
             discord_token=_require("DISCORD_TOKEN"),
             guild_id=int(guild) if guild else None,
             control_role=os.getenv("CONTROL_ROLE", "").strip(),
             notify_channel_id=int(channel) if channel else None,
-            gcp_project=_require("GCP_PROJECT"),
-            instance=_require("PALWORLD_INSTANCE"),
-            zone=_require("PALWORLD_ZONE"),
+            vm_provider=provider,
+            public_ip=os.getenv("PALWORLD_PUBLIC_IP", "").strip(),
+            gcp_project=req("GCP_PROJECT"),
+            instance=req("PALWORLD_INSTANCE"),
+            zone=req("PALWORLD_ZONE"),
             rest_host=os.getenv("PALWORLD_REST_HOST", "").strip(),
             rest_port=int(os.getenv("PALWORLD_REST_PORT", "8212")),
             admin_password=os.getenv("PALWORLD_ADMIN_PASSWORD", "").strip(),

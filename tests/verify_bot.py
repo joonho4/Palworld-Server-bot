@@ -117,6 +117,8 @@ async def main() -> int:
         "stopin_scheduled": embeds.stopin_scheduled(30),
         "stopin_cancelled": embeds.stopin_cancelled(),
         "stopin_none": embeds.stopin_none(),
+        "always_on": embeds.always_on("1.2.3.4"),
+        "power_unavailable": embeds.power_unavailable(),
     }
     import discord
     for name, e in samples.items():
@@ -142,6 +144,18 @@ async def main() -> int:
     print("\n[5] VMSnapshot 상태 판정")
     check("RUNNING is_running", snap_on.is_running and not snap_on.is_stopped)
     check("TERMINATED is_stopped", snap_off.is_stopped and not snap_off.is_running)
+
+    # 5-1. 상시 가동 모드 (StaticVM)
+    print("\n[5-1] 상시 가동 모드 (VM_PROVIDER=none)")
+    from palbot.services.static_vm import PowerControlUnavailable, StaticVM
+    static = StaticVM("1.2.3.4", "1.2.3.4")
+    st_snap = await static.snapshot()
+    check("StaticVM 항상 RUNNING", st_snap.is_running and st_snap.external_ip == "1.2.3.4")
+    try:
+        await static.stop()
+        check("StaticVM stop 차단", False)
+    except PowerControlUnavailable:
+        check("StaticVM stop 차단", True)
 
     # 6. REST 실패 시 안전 처리
     print("\n[6] REST API 예외 안전성")

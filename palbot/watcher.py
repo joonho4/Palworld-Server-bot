@@ -103,9 +103,9 @@ class ServerWatcher:
             f"🟢 {len(names)}명 접속 중이노" if names else "🟢 서버 켜져있노 (0명)"
         )
 
-        # 유휴 자동 종료
+        # 유휴 자동 종료 (전원 제어 가능한 서버에서만)
         limit = s.idle_stop_minutes
-        if not limit:
+        if not limit or not s.power_control:
             return
         if names:
             self._reset_idle()
