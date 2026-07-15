@@ -295,6 +295,16 @@ def help_all() -> discord.Embed:
     return e
 
 
+# ── 스팟 회수 감지 (감시 루프) ────────────────────────────────
+def preempted() -> discord.Embed:
+    return _base(
+        "⚡ 서버 튕겼노 (스팟 회수)",
+        "GCP가 스팟 서버를 회수해갔노. 서버 문제도 아니고 니 인터넷 문제도 아니다 이기.\n"
+        "`/start` 치면 1~3분 안에 복구되노. (오토세이브라 피해는 거의 없노)",
+        ERROR,
+    )
+
+
 # ── 상시 가동 모드 (오라클 무료 등) ───────────────────────────
 def always_on(ip_addr: str | None) -> discord.Embed:
     e = _base(

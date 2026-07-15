@@ -31,6 +31,7 @@ class ServerWatcher:
         self._idle_since: float | None = None
         self._warned = False
         self._last_presence: str | None = None
+        self._was_running = False   # 직전 사이클에 RUNNING이었는지 (회수 감지용)
 
     async def run(self) -> None:
         await self.bot.wait_until_ready()
@@ -62,10 +63,21 @@ class ServerWatcher:
         snap = await self.bot.vm.snapshot()
 
         if not snap.is_running:
+            # 봇이 끈 적 없는데 RUNNING → 꺼짐 = 스팟 회수(또는 외부 정지)로 판단
+            if self._was_running and s.power_control and not self.bot.expect_stop:
+                log.warning("의도치 않은 서버 정지 감지 (스팟 회수 추정)")
+                await notifications.send_embed(
+                    self.bot, s.notify_channel_id, embeds.preempted()
+                )
+            self._was_running = False
             self._reset_idle()
             self._prev_names = None
             await self._set_presence("💤 서버 꺼져있노")
             return
+
+        # 정상 가동 확인 — 의도적 정지 플래그 리셋
+        self._was_running = True
+        self.bot.expect_stop = False
 
         if not s.rest_enabled:
             await self._set_presence("🟢 서버 켜져있노")
@@ -137,6 +149,7 @@ class ServerWatcher:
                 saved = await self.bot.api.save(host)
             except Exception:
                 pass
+            self.bot.expect_stop = True
             await self.bot.vm.stop()
             self._reset_idle()
             self._prev_names = None

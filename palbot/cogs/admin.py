@@ -183,6 +183,7 @@ class Admin(commands.Cog):
                         saved = await self.bot.api.save(host)
                     except Exception:
                         pass
+            self.bot.expect_stop = True
             await self.bot.vm.stop()
             await notifications.send_embed(
                 self.bot, channel_id, embeds.server_stopping(saved)

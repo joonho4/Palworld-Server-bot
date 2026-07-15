@@ -93,6 +93,7 @@ class Control(commands.Cog):
             # 정지 전에 월드를 명시적으로 저장 (REST API가 설정된 경우, best-effort)
             saved = await self._save_world(s, snap)
 
+            self.bot.expect_stop = True
             await self.bot.vm.stop()
             await interaction.followup.send(embed=embeds.server_stopping(saved))
         except Exception:
@@ -143,6 +144,7 @@ class Control(commands.Cog):
 
             # 실행 중: 저장 → 정지 → (정지 확인 후) 재시작. 부팅 때 자동 업데이트됨.
             saved = await self._save_world(s, snap)
+            self.bot.expect_stop = True
             await self.bot.vm.stop()
             await interaction.followup.send(embed=embeds.server_updating(saved))
             self.bot.spawn(

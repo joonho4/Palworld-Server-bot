@@ -119,6 +119,7 @@ async def main() -> int:
         "stopin_none": embeds.stopin_none(),
         "always_on": embeds.always_on("1.2.3.4"),
         "power_unavailable": embeds.power_unavailable(),
+        "preempted": embeds.preempted(),
     }
     import discord
     for name, e in samples.items():

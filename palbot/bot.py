@@ -45,6 +45,8 @@ class PalworldBot(commands.Bot):
         self.api = PalworldAPI(settings.rest_port, settings.admin_password)
         # 백그라운드 태스크(준비 완료 폴링 등)가 GC로 사라지지 않도록 참조를 보관.
         self._bg_tasks: set = set()
+        # 봇이 의도적으로 서버를 끈 경우 True — 감시 루프가 스팟 회수와 구분하는 데 사용.
+        self.expect_stop = False
 
     def spawn(self, coro) -> None:
         """백그라운드 태스크를 생성하고 완료 시 자동으로 참조를 정리한다."""
