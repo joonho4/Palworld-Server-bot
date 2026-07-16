@@ -28,12 +28,14 @@ class VMController:
     async def create_disk_snapshot(self) -> str:
         """부팅 디스크 스냅샷 생성을 시작하고 스냅샷 이름을 반환한다 (완료 대기 안 함)."""
         name = f"palworld-{datetime.now(timezone.utc):%Y%m%d-%H%M%S}"
+        # 저장 위치를 VM과 같은 리전으로 고정 — 기본값(멀티리전)보다 저장·업로드 비용이 ~40% 저렴
+        region = self._zone.rsplit("-", 1)[0]
         await asyncio.to_thread(
             self._disks.create_snapshot,
             project=self._project,
             zone=self._zone,
             disk=self._disk,
-            snapshot_resource=compute_v1.Snapshot(name=name),
+            snapshot_resource=compute_v1.Snapshot(name=name, storage_locations=[region]),
         )
         return name
 
